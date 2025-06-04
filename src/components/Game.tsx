@@ -11,6 +11,14 @@ import ActivityForm from './ActivityForm';
 import Leaderboard from './Leaderboard';
 import GameHUD from './GameHUD';
 
+interface CollisionObject {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  type: 'tree' | 'bush' | 'fence' | 'water';
+}
+
 const Game: React.FC = () => {
   const dispatch = useDispatch();
   const { playerName, playerAvatar, isFormOpen, openForm, closeForm, viewingTeammate, setViewingTeammate } = useGameContext();
@@ -25,6 +33,31 @@ const Game: React.FC = () => {
     y: 0
   });
 
+  // Define invisible collision objects
+  const invisibleCollisionObjects: CollisionObject[] = [
+    // Trees along the top fence
+    { x: 32, y: 16, width: 48, height: 48, type: 'tree' },
+    { x: 160, y: 16, width: 48, height: 48, type: 'tree' },
+    { x: 288, y: 16, width: 48, height: 48, type: 'tree' },
+    { x: 416, y: 16, width: 48, height: 48, type: 'tree' },
+    { x: 544, y: 16, width: 48, height: 48, type: 'tree' },
+    
+    // Bushes around houses
+    { x: 320, y: 160, width: 32, height: 32, type: 'bush' },
+    { x: 368, y: 160, width: 32, height: 32, type: 'bush' },
+    { x: 416, y: 160, width: 32, height: 32, type: 'bush' },
+    
+    // Fences
+    { x: 0, y: 0, width: 1536, height: 16, type: 'fence' }, // Top fence
+    { x: 0, y: 704, width: 1536, height: 16, type: 'fence' }, // Bottom fence
+    { x: 0, y: 0, width: 16, height: 720, type: 'fence' }, // Left fence
+    { x: 1520, y: 0, width: 16, height: 720, type: 'fence' }, // Right fence
+    
+    // Water features
+    { x: 96, y: 480, width: 64, height: 32, type: 'water' },
+    { x: 1376, y: 480, width: 64, height: 32, type: 'water' },
+  ];
+  
   // Collision detection helper function
   const checkCollision = (newX: number, newY: number): boolean => {
     const playerBounds = {
@@ -33,6 +66,25 @@ const Game: React.FC = () => {
       top: newY - 24,
       bottom: newY + 24
     };
+
+    // Check collision with invisible objects
+    for (const obj of invisibleCollisionObjects) {
+      const objBounds = {
+        left: obj.x,
+        right: obj.x + obj.width,
+        top: obj.y,
+        bottom: obj.y + obj.height
+      };
+
+      if (
+        playerBounds.right > objBounds.left &&
+        playerBounds.left < objBounds.right &&
+        playerBounds.bottom > objBounds.top &&
+        playerBounds.top < objBounds.bottom
+      ) {
+        return true;
+      }
+    }
 
     // Check collision with teammate houses
     for (const teammate of teammates) {
